@@ -1,0 +1,20 @@
+# Cloudflare Named Tunnel Ingress Configuration for AGY-Mobile
+# Deploy to ~/.cloudflared/config.yml on Android / Termux
+
+tunnel: <YOUR-TUNNEL-UUID>
+credentials-file: /data/data/com.termux/files/home/.cloudflared/<YOUR-TUNNEL-UUID>.json
+
+ingress:
+  # 1. Forward PTY WebSocket daemon traffic
+  - hostname: ${AGY_DOMAIN}
+    path: ^/(ws|edge-auth).*
+    service: http://localhost:8081
+    originRequest:
+      noTLSVerify: true
+
+  # 2. Forward HTTP Static Web & REST API daemon traffic
+  - hostname: ${AGY_DOMAIN}
+    service: http://localhost:8080
+
+  # 3. Catch-all fallback
+  - service: http_status:404
