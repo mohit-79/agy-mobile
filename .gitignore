@@ -1,0 +1,20 @@
+# Environment & Confidential Secrets
+.env
+*.env
+.env.local
+.dev.vars
+
+# Python
+__pycache__/
+*.pyc
+*.log
+agy-mobile-app/server.log
+
+# Uploads
+agy-mobile-app/uploads/*
+!agy-mobile-app/uploads/.gitkeep
+agy-mobile-app/audio/*
+!agy-mobile-app/audio/.gitkeep
+
+# System
+.DS_Store
