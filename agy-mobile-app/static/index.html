@@ -489,6 +489,12 @@
       text-overflow: ellipsis;
     }
 
+    .conv-time-meta {
+      font-size: 10.5px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
     .conv-meta {
       font-size: 11px;
       color: #64748b;
@@ -1036,7 +1042,10 @@
           });
           item.innerHTML = `
             <div class="conv-title">${c.title}</div>
-            <div class="conv-meta">${dateStr} • ${c.id.substring(0, 8)}</div>
+            <div class="conv-time-meta">
+            <span>${dateStr}</span>
+            <span class="exact-time">${c.formatted_time || ""}</span>
+          </div>
           `;
           item.addEventListener('click', () => {
             closeMenu();

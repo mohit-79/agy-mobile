@@ -160,7 +160,9 @@ def get_conversations():
                                 break
             except Exception:
                 pass
-        convs.append({"id": cid, "title": title, "mtime": mtime})
+        dt = datetime.datetime.fromtimestamp(mtime)
+        formatted_time = dt.strftime("%Y-%m-%d %H:%M")
+        convs.append({"id": cid, "title": title, "mtime": mtime, "formatted_time": formatted_time})
 
     convs.sort(key=lambda x: x["mtime"], reverse=True)
     return convs
