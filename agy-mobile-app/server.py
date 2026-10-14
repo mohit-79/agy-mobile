@@ -38,6 +38,8 @@ SECRET_KEY = os.environ.get("AGY_AUTH_PIN", "CHANGE_ME_IN_ENV")
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(APP_DIR, "static")
 UPLOAD_DIR = os.path.join(APP_DIR, "uploads")
+AUDIO_DIR = os.path.join(APP_DIR, "audio")
+os.makedirs(AUDIO_DIR, exist_ok=True)
 BRAIN_DIR = os.path.expanduser("~/.gemini/antigravity-cli/brain")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -207,7 +209,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path == "/upload":
+        if parsed.path == "/upload" or parsed.path == "/upload-audio":
             content_type = self.headers.get("Content-Type", "")
             if not content_type.startswith("multipart/form-data"):
                 self.send_response(400)
@@ -240,7 +242,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                                 fname = line.split('filename="')[1].split('"')[0]
                                 fname = os.path.basename(fname)
 
-                        saved_path = os.path.join(UPLOAD_DIR, fname)
+                        target_dir = AUDIO_DIR if parsed.path == "/upload-audio" else UPLOAD_DIR
+                        saved_path = os.path.join(target_dir, fname)
                         with open(saved_path, "wb") as f:
                             f.write(content_part)
                         uploaded_files.append(saved_path)
