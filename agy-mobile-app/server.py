@@ -183,6 +183,21 @@ def get_conversations():
     convs.sort(key=lambda x: x["mtime"], reverse=True)
     return convs
 
+def get_telemetry():
+    active_count = len(active_sessions)
+    all_c = get_conversations()
+    return {
+        "status": "ONLINE",
+        "active_pty_sessions": active_count,
+        "total_sessions": len(all_c),
+        "agents": [
+            {"name": "Main Orchestrator", "role": "Planning & Synthesis", "status": "ACTIVE"},
+            {"name": "Subagent: Coder", "role": "Code Edits & Refactor", "status": "STANDBY"},
+            {"name": "Subagent: Researcher", "role": "Docs & File Inspection", "status": "STANDBY"},
+            {"name": "Subagent: Tester", "role": "Builds & Verification", "status": "STANDBY"}
+        ]
+    }
+
 class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC_DIR, **kwargs)
@@ -204,6 +219,13 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps(convs).encode("utf-8"))
+                elif parsed.path == "/api/telemetry":
+            if token != SECRET_KEY:
+                self.send_error_response(401, "Unauthorized")
+                return
+            tel = get_telemetry()
+            self.send_json_response(200, tel)
+
         else:
             super().do_GET()
 
