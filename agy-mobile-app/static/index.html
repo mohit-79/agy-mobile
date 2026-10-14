@@ -186,6 +186,32 @@
       box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.7);
     }
 
+    
+    #attached-chips-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 0 4px 4px 4px;
+      max-width: 100%;
+    }
+    .file-chip {
+      background: rgba(0, 255, 204, 0.12);
+      border: 1px solid rgba(0, 255, 204, 0.4);
+      color: var(--neon-cyan);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .file-chip-remove {
+      cursor: pointer;
+      font-weight: bold;
+      color: #f87171;
+    }
+
     .chat-input-wrapper {
       display: flex;
       align-items: center;
@@ -645,6 +671,8 @@
     <div id="bottom-panel">
       <div id="file-note" class="file-notification"></div>
 
+            <!-- Attached Multi-Files Strip -->
+      <div id="attached-chips-row"></div>
       <!-- Cyber Terminal Prompt Bar -->
       <div class="chat-input-wrapper">
         <input type="file" id="file-picker" style="display: none;" multiple>
