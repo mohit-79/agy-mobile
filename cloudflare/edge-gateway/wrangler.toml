@@ -1,0 +1,15 @@
+name = "agy-gatekeeper"
+main = "src/index.js"
+compatibility_date = "2024-04-01"
+
+# Production route mapping (set in .env / wrangler secret)
+routes = [
+  { pattern = "${AGY_DOMAIN}/*", zone_name = "${CF_ZONE_NAME}" }
+]
+
+[vars]
+# Configure confidential secrets via wrangler secret:
+# wrangler secret put AUTH_PIN
+# wrangler secret put SESSION_SECRET
+AUTH_PIN = "${AGY_AUTH_PIN}"
+SESSION_SECRET = "${AGY_SESSION_SECRET}"

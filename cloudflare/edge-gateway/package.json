@@ -1,0 +1,12 @@
+{
+  "name": "agy-gatekeeper",
+  "version": "1.0.0",
+  "description": "Zero-trust edge gateway worker protecting agy mobile domain",
+  "main": "src/index.js",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
