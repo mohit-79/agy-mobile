@@ -388,6 +388,14 @@
       transition: all 0.1s;
     }
 
+    
+    .key-btn.latched {
+      background: var(--neon-cyan) !important;
+      color: #030712 !important;
+      border-color: var(--neon-cyan) !important;
+      box-shadow: 0 0 10px var(--neon-cyan);
+    }
+
     .key-btn:active {
       background: rgba(0, 255, 204, 0.25);
       border-color: var(--neon-cyan);
@@ -724,7 +732,15 @@
       </div>
 
       <!-- Accessory Terminal Keys -->
-      <div class="quick-keys-row">
+            <div class="quick-keys-row">
+        <button class="key-btn" id="btn-ctrl">CTRL</button>
+        <button class="key-btn" id="btn-shift">SHIFT</button>
+        <button class="key-btn" id="btn-tab">TAB</button>
+        <button class="key-btn" id="btn-esc">ESC</button>
+        <button class="key-btn" id="btn-clear">CLEAR</button>
+      </div>
+      <!-- Legacy buttons row -->
+      <div class="quick-keys-row" style="display:none;">
         <button class="key-btn" id="btn-esc">ESC</button>
         <button class="key-btn" id="btn-tab">TAB</button>
         <button class="key-btn" id="btn-ctrl-c">CTRL+C</button>
