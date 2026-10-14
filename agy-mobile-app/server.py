@@ -198,6 +198,69 @@ def get_telemetry():
         ]
     }
 
+def get_execution_flowchart(conv_id=None):
+    nodes = []
+    if not conv_id or conv_id == "default" or conv_id == "new":
+        all_c = get_conversations()
+        if all_c:
+            conv_id = all_c[0]["id"]
+        else:
+            return {"conv_id": None, "nodes": []}
+
+    log_file = os.path.join(BRAIN_DIR, conv_id, ".system_generated", "logs", "transcript.jsonl")
+    if not os.path.exists(log_file):
+        return {"conv_id": conv_id, "nodes": []}
+
+    idx = 0
+    try:
+        with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                d = json.loads(line)
+                t = d.get("type")
+                content = d.get("content", "")
+                tool_calls = d.get("tool_calls", [])
+
+                if t == "USER_INPUT":
+                    clean = re.sub(r'<[^>]+>', '', content).strip()
+                    nodes.append({
+                        "id": f"node-{idx}",
+                        "type": "USER_INTENT",
+                        "label": clean[:50] + "..." if len(clean) > 50 else clean,
+                        "status": "COMPLETED",
+                        "details": clean[:250]
+                    })
+                    idx += 1
+                elif tool_calls:
+                    for tc in tool_calls:
+                        call_name = tc.get("toolAction") or tc.get("toolSummary") or "Tool Call"
+                        nodes.append({
+                            "id": f"node-{idx}",
+                            "type": "TOOL_CALL",
+                            "label": call_name,
+                            "status": "DONE",
+                            "details": json.dumps(tc.get("arguments", {}), indent=2)
+                        })
+                        idx += 1
+                elif t == "PLANNER_RESPONSE" and content:
+                    clean = re.sub(r'<[^>]+>', '', content).strip()
+                    if clean and len(clean) > 10:
+                        nodes.append({
+                            "id": f"node-{idx}",
+                            "type": "AGENT_STEP",
+                            "label": clean[:45] + "...",
+                            "status": "DONE",
+                            "details": clean[:300]
+                        })
+                        idx += 1
+    except Exception as e:
+        pass
+
+    if len(nodes) > 25:
+        nodes = nodes[-25:]
+    return {"conv_id": conv_id, "nodes": nodes}
+
 class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC_DIR, **kwargs)
@@ -219,7 +282,14 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps(convs).encode("utf-8"))
-                elif parsed.path == "/api/telemetry":
+                        elif parsed.path == "/api/flowchart":
+            if token != SECRET_KEY:
+                self.send_error_response(401, "Unauthorized")
+                return
+            conv_id = query.get("conversation", [None])[0]
+            fc = get_execution_flowchart(conv_id)
+            self.send_json_response(200, fc)
+        elif parsed.path == "/api/telemetry":
             if token != SECRET_KEY:
                 self.send_error_response(401, "Unauthorized")
                 return
