@@ -137,6 +137,50 @@
     }
 
     /* Terminal Viewport */
+    
+    #quick-action-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 6px 10px;
+      background: rgba(8, 14, 26, 0.95);
+      border-bottom: 1px solid var(--border-subtle);
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      flex-shrink: 0;
+    }
+    #quick-action-bar::-webkit-scrollbar { display: none; }
+    .q-action-chip {
+      appearance: none;
+      flex: 0 0 auto;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(0, 255, 204, 0.3);
+      color: #e2e8f0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.12s;
+    }
+    .q-action-chip:active {
+      transform: scale(0.94);
+      border-color: var(--neon-cyan);
+      background: rgba(0, 255, 204, 0.2);
+    }
+    .q-action-chip.accent-goal { border-color: var(--neon-amber); color: var(--neon-amber); }
+    .q-action-chip.accent-swarm { border-color: var(--neon-blue); color: var(--neon-blue); }
+    .q-action-chip.accent-agents { border-color: var(--neon-green); color: var(--neon-green); }
+    .q-action-chip.accent-research { border-color: var(--neon-magenta); color: var(--neon-magenta); }
+    .q-action-chip.accent-sandbox { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+    .q-action-chip.accent-compact { border-color: #a855f7; color: #c084fc; }
+    .q-action-chip.accent-halt { border-color: #ef4444; color: #ef4444; }
+
     #terminal-container {
       flex: 1 1 0;
       min-height: 0;
@@ -673,6 +717,17 @@
         <span id="status-text">OFFLINE</span>
       </div>
     </header>
+
+        <!-- 1-Tap Quick Action Bar 2.0 -->
+    <div id="quick-action-bar">
+      <button class="q-action-chip accent-goal" id="q-goal">⚡ Goal Mode</button>
+      <button class="q-action-chip accent-swarm" id="q-swarm">👥 Teamwork Swarm</button>
+      <button class="q-action-chip accent-agents" id="q-agents">📊 Agent Directory</button>
+      <button class="q-action-chip accent-research" id="q-research">🔬 Deep Research</button>
+      <button class="q-action-chip accent-sandbox" id="q-sandbox">🧪 Code Sandbox</button>
+      <button class="q-action-chip accent-compact" id="q-compact">🧹 Compact</button>
+      <button class="q-action-chip accent-halt" id="q-halt">🛑 Emergency Halt</button>
+    </div>
 
     <div id="terminal-container"></div>
 
