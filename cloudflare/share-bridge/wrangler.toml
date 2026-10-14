@@ -1,0 +1,12 @@
+name = "harjani-share"
+main = "src/index.js"
+compatibility_date = "2024-04-01"
+workers_dev = true
+
+routes = [
+  { pattern = "${SHARE_DOMAIN}", custom_domain = true }
+]
+
+kv_namespaces = [
+  { binding = "SHARE_FILES", id = "${SHARE_KV_NAMESPACE_ID}" }
+]

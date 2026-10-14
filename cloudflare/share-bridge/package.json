@@ -1,0 +1,12 @@
+{
+  "name": "harjani-share",
+  "version": "1.0.0",
+  "description": "Serverless edge file bridge on SHARE_DOMAIN for cross-device agent file exchange",
+  "main": "src/index.js",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
