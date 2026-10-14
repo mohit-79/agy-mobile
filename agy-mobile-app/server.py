@@ -135,6 +135,20 @@ class PTYSession:
 active_sessions = {}
 sessions_lock = None
 
+def categorize_session(title):
+    t = title.lower()
+    if any(k in t for k in ["goal", "autonomous", "overnight", "continuous"]):
+        return "GOAL"
+    if any(k in t for k in ["bug", "fix", "error", "crash", "trace", "fail"]):
+        return "DEBUG"
+    if any(k in t for k in ["create", "build", "widget", "feature", "app", "ui", "add"]):
+        return "FEATURE"
+    if any(k in t for k in ["plan", "design", "interview", "architecture"]):
+        return "PLAN"
+    if any(k in t for k in ["research", "search", "explain", "doc"]):
+        return "RESEARCH"
+    return "CLI"
+
 def get_conversations():
     convs = []
     if not os.path.isdir(BRAIN_DIR):
@@ -162,7 +176,7 @@ def get_conversations():
                 pass
         dt = datetime.datetime.fromtimestamp(mtime)
         formatted_time = dt.strftime("%Y-%m-%d %H:%M")
-        convs.append({"id": cid, "title": title, "mtime": mtime, "formatted_time": formatted_time})
+        convs.append({"id": cid, "title": title, "mtime": mtime, "formatted_time": formatted_time, "category": categorize_session(title)})
 
     convs.sort(key=lambda x: x["mtime"], reverse=True)
     return convs

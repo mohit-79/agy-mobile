@@ -458,6 +458,21 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    
+    .conv-category-tag {
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .tag-GOAL { background: rgba(245, 158, 11, 0.2); color: var(--neon-amber); border: 1px solid var(--neon-amber); }
+    .tag-DEBUG { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #f87171; }
+    .tag-FEATURE { background: rgba(0, 255, 204, 0.2); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); }
+    .tag-PLAN { background: rgba(56, 189, 248, 0.2); color: var(--neon-blue); border: 1px solid var(--neon-blue); }
+    .tag-RESEARCH { background: rgba(236, 72, 153, 0.2); color: var(--neon-magenta); border: 1px solid var(--neon-magenta); }
+    .tag-CLI { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid #94a3b8; }
+
     .conv-item {
       padding: 10px 12px;
       border-radius: 6px;
@@ -1041,7 +1056,10 @@
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
           });
           item.innerHTML = `
+            <div class="conv-item-top">
+            <span class="conv-category-tag tag-${c.category || "CLI"}">${c.category || "CLI"}</span>
             <div class="conv-title">${c.title}</div>
+          </div>
             <div class="conv-time-meta">
             <span>${dateStr}</span>
             <span class="exact-time">${c.formatted_time || ""}</span>
