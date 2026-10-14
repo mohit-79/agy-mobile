@@ -11,6 +11,7 @@ import threading
 import websockets
 import re
 import urllib.parse
+import datetime
 from collections import deque
 
 def load_env(env_path=None):
@@ -39,9 +40,9 @@ APP_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(APP_DIR, "static")
 UPLOAD_DIR = os.path.join(APP_DIR, "uploads")
 AUDIO_DIR = os.path.join(APP_DIR, "audio")
-os.makedirs(AUDIO_DIR, exist_ok=True)
 BRAIN_DIR = os.path.expanduser("~/.gemini/antigravity-cli/brain")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
 
 # Session manager to keep PTY processes alive across network drops
 class PTYSession:
@@ -172,31 +173,25 @@ def get_conversations():
                             raw = data.get("content", "").strip()
                             clean = re.sub(r'<[^>]+>', '', raw).strip()
                             if clean:
-                                title = clean[:60].replace("\n", " ")
+                                title = clean[:65].replace("\n", " ")
                                 break
             except Exception:
                 pass
+
         dt = datetime.datetime.fromtimestamp(mtime)
         formatted_time = dt.strftime("%Y-%m-%d %H:%M")
-        convs.append({"id": cid, "title": title, "mtime": mtime, "formatted_time": formatted_time, "category": categorize_session(title)})
+        category = categorize_session(title)
+
+        convs.append({
+            "id": cid,
+            "title": title,
+            "mtime": mtime,
+            "formatted_time": formatted_time,
+            "category": category
+        })
 
     convs.sort(key=lambda x: x["mtime"], reverse=True)
     return convs
-
-def get_telemetry():
-    active_count = len(active_sessions)
-    all_c = get_conversations()
-    return {
-        "status": "ONLINE",
-        "active_pty_sessions": active_count,
-        "total_sessions": len(all_c),
-        "agents": [
-            {"name": "Main Orchestrator", "role": "Planning & Synthesis", "status": "ACTIVE"},
-            {"name": "Subagent: Coder", "role": "Code Edits & Refactor", "status": "STANDBY"},
-            {"name": "Subagent: Researcher", "role": "Docs & File Inspection", "status": "STANDBY"},
-            {"name": "Subagent: Tester", "role": "Builds & Verification", "status": "STANDBY"}
-        ]
-    }
 
 def get_execution_flowchart(conv_id=None):
     nodes = []
@@ -205,20 +200,21 @@ def get_execution_flowchart(conv_id=None):
         if all_c:
             conv_id = all_c[0]["id"]
         else:
-            return {"conv_id": None, "nodes": []}
+            return {"nodes": []}
 
-    log_file = os.path.join(BRAIN_DIR, conv_id, ".system_generated", "logs", "transcript.jsonl")
-    if not os.path.exists(log_file):
-        return {"conv_id": conv_id, "nodes": []}
+    log_path = os.path.join(BRAIN_DIR, conv_id, ".system_generated", "logs", "transcript.jsonl")
+    if not os.path.exists(log_path):
+        return {"nodes": [], "conv_id": conv_id}
 
-    idx = 0
     try:
-        with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+            idx = 0
             for line in f:
                 if not line.strip():
                     continue
                 d = json.loads(line)
                 t = d.get("type")
+                source = d.get("source", "")
                 content = d.get("content", "")
                 tool_calls = d.get("tool_calls", [])
 
@@ -227,18 +223,19 @@ def get_execution_flowchart(conv_id=None):
                     nodes.append({
                         "id": f"node-{idx}",
                         "type": "USER_INTENT",
-                        "label": clean[:50] + "..." if len(clean) > 50 else clean,
-                        "status": "COMPLETED",
-                        "details": clean[:250]
+                        "label": clean[:50] if clean else "User Request",
+                        "status": "DONE",
+                        "details": clean
                     })
                     idx += 1
                 elif tool_calls:
                     for tc in tool_calls:
-                        call_name = tc.get("toolAction") or tc.get("toolSummary") or "Tool Call"
+                        func_name = tc.get("name", "Tool")
+                        summary = tc.get("toolSummary", tc.get("toolAction", func_name))
                         nodes.append({
                             "id": f"node-{idx}",
                             "type": "TOOL_CALL",
-                            "label": call_name,
+                            "label": f"{func_name}: {summary}",
                             "status": "DONE",
                             "details": json.dumps(tc.get("arguments", {}), indent=2)
                         })
@@ -257,9 +254,26 @@ def get_execution_flowchart(conv_id=None):
     except Exception as e:
         pass
 
+    # Keep most recent 25 nodes for snappy rendering
     if len(nodes) > 25:
         nodes = nodes[-25:]
     return {"conv_id": conv_id, "nodes": nodes}
+
+def get_telemetry():
+    # Return agent status, active sessions, and system metrics
+    active_count = len(active_sessions)
+    all_c = get_conversations()
+    return {
+        "status": "ONLINE",
+        "active_pty_sessions": active_count,
+        "total_sessions": len(all_c),
+        "agents": [
+            {"name": "Main Orchestrator", "role": "Planning & Synthesis", "status": "ACTIVE"},
+            {"name": "Subagent: Coder", "role": "Code Edits & Refactor", "status": "STANDBY"},
+            {"name": "Subagent: Researcher", "role": "Docs & File Inspection", "status": "STANDBY"},
+            {"name": "Subagent: Tester", "role": "Builds & Verification", "status": "STANDBY"}
+        ]
+    }
 
 class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -267,28 +281,25 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path == "/api/conversations":
-            query = urllib.parse.parse_qs(parsed.query)
-            token = query.get("token", [""])[0]
-            if token != SECRET_KEY:
-                self.send_response(401)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(b'{"error": "Unauthorized"}')
-                return
+        query = urllib.parse.parse_qs(parsed.query)
+        token = query.get("token", [""])[0]
 
+        # Authenticated API endpoints
+        if parsed.path == "/api/conversations":
+            if token != SECRET_KEY:
+                self.send_error_response(401, "Unauthorized")
+                return
             convs = get_conversations()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(convs).encode("utf-8"))
-                        elif parsed.path == "/api/flowchart":
+            self.send_json_response(200, convs)
+
+        elif parsed.path == "/api/flowchart":
             if token != SECRET_KEY:
                 self.send_error_response(401, "Unauthorized")
                 return
             conv_id = query.get("conversation", [None])[0]
             fc = get_execution_flowchart(conv_id)
             self.send_json_response(200, fc)
+
         elif parsed.path == "/api/telemetry":
             if token != SECRET_KEY:
                 self.send_error_response(401, "Unauthorized")
@@ -304,9 +315,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         if parsed.path == "/upload" or parsed.path == "/upload-audio":
             content_type = self.headers.get("Content-Type", "")
             if not content_type.startswith("multipart/form-data"):
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(b'{"error": "Expected multipart/form-data"}')
+                self.send_error_response(400, "Expected multipart/form-data")
                 return
 
             try:
@@ -321,6 +330,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 parts = body.split(delimiter)
                 uploaded_files = []
 
+                target_dir = AUDIO_DIR if parsed.path == "/upload-audio" else UPLOAD_DIR
+
                 for part in parts:
                     if b'filename="' in part:
                         header_part, content_part = part.split(b"\r\n\r\n", 1)
@@ -334,25 +345,29 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                                 fname = line.split('filename="')[1].split('"')[0]
                                 fname = os.path.basename(fname)
 
-                        target_dir = AUDIO_DIR if parsed.path == "/upload-audio" else UPLOAD_DIR
                         saved_path = os.path.join(target_dir, fname)
                         with open(saved_path, "wb") as f:
                             f.write(content_part)
                         uploaded_files.append(saved_path)
 
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                response_data = {"success": True, "files": uploaded_files}
-                self.wfile.write(json.dumps(response_data).encode("utf-8"))
+                self.send_json_response(200, {"success": True, "files": uploaded_files})
             except Exception as e:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
+                self.send_error_response(500, str(e))
         else:
-            self.send_response(404)
-            self.end_headers()
+            self.send_error_response(404, "Endpoint not found")
+
+    def send_json_response(self, code, data):
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode("utf-8"))
+
+    def send_error_response(self, code, msg):
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps({"error": msg}).encode("utf-8"))
 
     def log_message(self, format, *args):
         pass
@@ -379,60 +394,51 @@ async def handle_ws(websocket):
 
     loop = asyncio.get_running_loop()
 
-    # Get or create persistent session
-    async with sessions_lock:
-        if conv_id not in active_sessions:
-            sess = PTYSession(conv_id)
-            sess.start_reader(loop)
-            active_sessions[conv_id] = sess
-        else:
-            sess = active_sessions[conv_id]
+    # Get or create PTY session for this conversation
+    if conv_id not in active_sessions:
+        session = PTYSession(conv_id)
+        session.start_reader(loop)
+        active_sessions[conv_id] = session
+    else:
+        session = active_sessions[conv_id]
 
-    sess.clients.add(websocket)
+    session.clients.add(websocket)
 
-    # Immediately replay recent output history to client on reconnect
-    if sess.history_buffer:
-        joined_history = "".join(sess.history_buffer)
-        await websocket.send(json.dumps({"type": "history", "data": joined_history}))
+    # Immediately replay recent history buffer so client sees previous output instantly
+    if session.history_buffer:
+        replay = "".join(session.history_buffer)
+        await websocket.send(json.dumps({"type": "history", "data": replay}))
 
     try:
-        async for msg_str in websocket:
+        async for message in websocket:
             try:
-                msg = json.loads(msg_str)
+                msg = json.loads(message)
                 mtype = msg.get("type")
                 if mtype == "input":
-                    sess.write_input(msg.get("data", ""))
+                    data = msg.get("data", "")
+                    session.write_input(data)
                 elif mtype == "resize":
-                    sess.resize(msg.get("rows", 24), msg.get("cols", 80))
+                    rows = msg.get("rows", 30)
+                    cols = msg.get("cols", 80)
+                    session.resize(rows, cols)
                 elif mtype == "ping":
                     await websocket.send(json.dumps({"type": "pong"}))
-            except Exception:
-                pass
+            except json.JSONDecodeError:
+                # Direct raw text input fallback
+                session.write_input(message)
     except websockets.exceptions.ConnectionClosed:
         pass
     finally:
-        sess.clients.discard(websocket)
+        session.clients.discard(websocket)
 
 async def main():
-    global sessions_lock
-    sessions_lock = asyncio.Lock()
+    http_thread = threading.Thread(target=start_http_server, daemon=True)
+    http_thread.start()
+    print(f"[*] AGY-Mobile 2.0 HTTP API listening on port {HTTP_PORT}")
+    print(f"[*] AGY-Mobile 2.0 WebSocket listening on port {WS_PORT}")
 
-    t = threading.Thread(target=start_http_server, daemon=True)
-    t.start()
-
-    # Ping interval and ping timeout keep Cloudflare and cellular sockets alive
-    async with websockets.serve(
-        handle_ws,
-        "0.0.0.0",
-        WS_PORT,
-        ping_interval=15,
-        ping_timeout=20,
-        max_size=10_000_000
-    ):
+    async with websockets.serve(handle_ws, "0.0.0.0", WS_PORT, ping_interval=20, ping_timeout=20):
         await asyncio.Future()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        pass
+    asyncio.run(main())
