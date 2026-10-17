@@ -1,151 +1,161 @@
-# 🚀 AGY-Mobile 2.0 // Power-User Autonomous Agent Cockpit
+# 🚀 AGY 2.0 // Universal Autonomous Agent Cockpit
 
-A high-performance mobile web interface and control cockpit for **Google Antigravity (AGY)** running on Android via Termux, protected by Cloudflare Edge Gatekeepers and Cloudflare Named Tunnels.
-
----
-
-## 🏗️ Full-Stack System Architecture
-
-```
-                          [ Client Browser ]
-                                  │
-                                  ▼
-                [ Cloudflare Edge Gatekeeper Worker ]
-                 (Zero-Trust PIN & Session Cookie)
-                                  │
-                                  ▼
-                     [ Cloudflare Named Tunnel ]
-                                  │
-          ┌───────────────────────┴───────────────────────┐
-          │                                               │
-     (HTTP :8080)                                    (WS :8081)
-          │                                               │
-          ▼                                               ▼
- [ CustomHTTPHandler ]                            [ PTYSession Manager ]
-   ├── /api/conversations                           ├── pty.fork()
-   ├── /api/flowchart                               └── /usr/bin/agy
-   ├── /api/telemetry
-   └── /upload & /upload-audio
-
-                                  ▲
-                                  │ (Cross-Device File Bridge)
-                [ Cloudflare Share Bridge Worker ]
-                   (share.yourdomain.com / 24h Buffer)
-```
+A high-performance, cross-platform mobile & desktop cockpit for **Google Antigravity (AGY)**. Operates seamlessly on **Windows PC**, **Android (Termux)**, **Linux**, and **macOS**, optionally secured by Cloudflare Zero-Trust Edge Gatekeepers.
 
 ---
 
-## ⚡ Features at a Glance
+## ⚡ Quick Start (Zero-Friction 1-Click Setup)
 
-### 1. Zero-Trust Edge Gateway (`cloudflare/edge-gateway`)
-- **Edge Pre-Authentication:** Inbound traffic to `$AGY_DOMAIN` is verified at Cloudflare's global edge network before touching the mobile device.
-- **Master PIN Lock:** Edge-computed master PIN validation with 30-day secure HttpOnly session cookies.
-- **WebSocket Streaming Proxy:** High-throughput bidirectional PTY frame streaming over WebSockets.
-
-### 2. Universal File Share Bridge (`cloudflare/share-bridge`)
-- **Serverless File Bridge:** Instant device-to-device transfers on `$SHARE_DOMAIN`.
-- **Dual-Mode:** Drag-and-drop web UI + cURL API for autonomous AGY agents to exchange APKs, keystores, and code archives.
-
-### 3. Sessions Menu Refinements
-- **Dual Timestamps:** Human-readable relative time (`2h ago`) alongside exact `YYYY-MM-DD HH:mm` timestamps.
-- **Intelligent Categorization Badges:** Automatic intent parsing tags sessions as `[GOAL]`, `[DEBUG]`, `[FEATURE]`, `[PLAN]`, `[RESEARCH]`, or `[CLI]`.
-
-### 4. Command Bar & Input Hub
-- **Multi-Select File Attachments:** Select and upload multiple documents simultaneously with dismissible chip badges.
-- **Native Audio/Voice Streaming:** Direct HTML5 `MediaRecorder` audio capture streaming voice instructions straight into the agent pipeline.
-
-### 5. Quick Action Bar (Mobile/Touch Enhancements)
-- **Virtual Sticky Modifier Engine:** Dedicated **Ctrl**, **Shift**, and **Tab** keys with latching state (`.latched`).
-- **Hardware Keyboard Interception:** Combines virtual modifiers with physical keyboards (e.g. tap virtual `Ctrl` + press physical `C` = `\x03`).
-
-### 6. 1-Tap Quick Action Bar 2.0
-- `⚡ Goal Mode` (`/goal`)
-- `👥 Teamwork Swarm` (`/teamwork-preview`)
-- `🔬 Deep Research` (`/boost`)
-- `🧪 Code Sandbox` (`/learn`)
-- `🧹 Compact` (`/compact`)
-- `🛑 Emergency Halt` (`\x03`)
-
-### 7. Live Execution Flowchart (Right Sidebar)
-- Real-time interactive node DAG parsing background sub-routines, tool calls, and user intents directly from `transcript.jsonl`.
-- Complete transparency into autonomous problem-solving workflows.
-
-### 8. Agent Directory & Telemetry Hub
-- Popover modal reporting active PTY sessions, connection health, and real-time agent rosters.
+### 🪟 On Windows PC
+1. Clone repository:
+   ```cmd
+   git clone https://github.com/mohit-79/agy-mobile.git
+   cd agy-mobile
+   ```
+2. Double-click **`start.bat`** (or run `start.bat` in Command Prompt / PowerShell).
+   - *Auto-initializes configuration (`.env`).*
+   - *Auto-installs required Python packages (`requirements.txt`).*
+   - *Auto-locates or downloads standalone `cloudflared`.*
+   - *Spawns the local daemon, opens Cloudflare Quick Tunnel, and launches your browser directly into the Cockpit!*
 
 ---
 
-## 🔐 Environment & Secret Management
+### 📱 On Android (Termux)
+1. Install Termux prerequisites and clone repository:
+   ```bash
+   pkg update -y && pkg install -y git python python-pip
+   git clone https://github.com/mohit-79/agy-mobile.git
+   cd agy-mobile
+   ```
+2. Run universal setup:
+   ```bash
+   chmod +x start.sh install.sh
+   ./start.sh
+   ```
+3. *(Optional)* **1-Tap Widget Shortcut**:
+   Run `bash launcher/install-widget.sh` to install the `AGY` widget into `~/.shortcuts/` for instant home screen launch.
 
-AGY-Mobile isolates all sensitive hostnames, PINs, and session tokens inside `.env`. The `.env` file is excluded from Git via `.gitignore`.
+---
 
-1. Copy `.env.example` to `.env`:
+### 🐧 On Linux / macOS
 ```bash
-cp .env.example .env
-```
-2. Configure your confidential parameters:
-```env
-AGY_DOMAIN=agy.yourdomain.com
-AGY_AUTH_PIN=your_master_pin_here
-AGY_SESSION_SECRET=your_random_secure_session_secret_here
-AGY_HTTP_PORT=8080
-AGY_WS_PORT=8081
-CF_ZONE_NAME=yourdomain.com
-SHARE_DOMAIN=share.yourdomain.com
+git clone https://github.com/mohit-79/agy-mobile.git
+cd agy-mobile
+chmod +x start.sh
+./start.sh
 ```
 
 ---
 
-## 📂 Repository Layout
+## 🏗️ Architecture Blueprint
+
+```
+                           [ Client Browser / Mobile / Desktop ]
+                                             │
+                                             ▼
+                          [ Cloudflare Edge Gatekeeper Worker ]
+                           (Zero-Trust PIN & Session Cookie)
+                                             │
+                                             ▼
+                                 [ Cloudflare Quick Tunnel ]
+                                (*.trycloudflare.com / Named)
+                                             │
+                         ┌───────────────────┴───────────────────┐
+                         │                                       │
+                    (HTTP :8090)                            (WS :8090)
+                         │                                       │
+                         ▼                                       ▼
+             [ Starlette Universal Router ]           [ Shell / PTY Manager ]
+               ├── / (Cockpit Interface)                ├── Windows: PowerShell UTF-8
+               ├── /api/conversations                   └── Linux/Termux: POSIX PTY
+               ├── /api/flowchart (DAG Nodes)           └── agy CLI Orchestrator
+               ├── /api/telemetry
+               └── /upload & /upload-audio
+```
+
+---
+
+## 🌟 Core Features
+
+- **Single-Port Architecture**: HTTP, WebSockets (`/ws`), file uploads, and audio streaming all share a single port (default: `8090`), eliminating port collisions and simplifying ingress routing.
+- **Cross-Platform Engine**:
+  - **Windows**: Interactive piped session using UTF-8 PowerShell or `cmd.exe` with direct access to `agy.exe`.
+  - **Linux / Termux / macOS**: Native pseudo-terminal (`pty.fork()`) with true ANSI color streaming.
+- **Zero-Config Cloudflare Quick Tunnel**: Automatically opens an HTTPS tunnel with zero Cloudflare account or tunnel credentials required.
+- **Optional Zero-Trust Edge Gateway (`cloudflare/edge-gateway`)**: Secure your workstation or phone behind a Cloudflare Edge Worker with master PIN lock and automatic dynamic tunnel synchronization (`/api/tunnel-url`).
+- **Real-Time Execution Flowchart**: Live visual DAG parsing sub-agents, tool executions, and user intents straight from `transcript.jsonl`.
+- **Touch & Desktop Hybrid Input**: Virtual modifier keys (Ctrl, Shift, Tab) with latching states, full hardware keyboard passthrough, and dismissible file attachment chips.
+- **Voice Instruction Streaming**: Built-in HTML5 `MediaRecorder` audio capture streaming voice instructions directly to the agent.
+- **Self-Healing Supervisor**: Continuously monitors the local origin server and tunnel process; auto-restarts and re-synchronizes on network disconnects.
+
+---
+
+## ⚙️ Configuration (`.env`)
+
+Copy `.env.example` to `.env` to customize settings:
+
+```env
+# Master Unlock PIN
+AGY_AUTH_PIN=29105
+
+# Local Origin Port
+PORT=8090
+
+# Optional: Cloudflare Edge Gateway URL (start.py auto-syncs its tunnel here)
+AGY_GATEWAY_URL=https://agypc.harjani.me
+```
+
+---
+
+## 🌐 Deploying the Zero-Trust Edge Gateway (Cloudflare Worker)
+
+If you want a permanent custom domain (e.g. `https://agypc.yourdomain.com` or `https://agy.yourdomain.com`):
+
+1. Enter gateway directory:
+   ```bash
+   cd cloudflare/edge-gateway
+   ```
+2. Create a Cloudflare KV namespace for dynamic tunnel registration:
+   ```bash
+   npx wrangler kv:namespace create TUNNEL_KV
+   ```
+3. Update `wrangler.toml` with the generated KV ID.
+4. Deploy the worker:
+   ```bash
+   npx wrangler deploy
+   ```
+5. Set `AGY_GATEWAY_URL=https://your-worker-domain.com` in `.env`.
+   Whenever `start.bat` or `./start.sh` launches on your PC or phone, it will automatically register its active tunnel with your Cloudflare Worker!
+
+---
+
+## 📁 Repository Structure
 
 ```
 agy-mobile/
 ├── .env.example                # Public environment configuration template
-├── .gitignore                  # Ignores confidential .env and runtime artifacts
+├── .gitignore                  # Ignores local secrets and logs
+├── requirements.txt            # Python dependencies (starlette, uvicorn, multipart, websockets)
+├── start.bat                   # 1-Click Windows launcher & auto-installer
+├── start.sh                    # 1-Click Linux / macOS / Termux launcher
+├── start.py                    # Universal Cross-Platform Supervisor Engine
+├── install.sh                  # Automated system setup script
+├── agy-mobile.sh               # Root convenience launcher
+├── agy-mobile-app/             # Origin Backend & Cockpit Assets
+│   ├── server.py               # Starlette + Uvicorn universal server
+│   ├── requirements.txt        # Local requirements mirror
+│   ├── static/
+│   │   └── index.html          # Cockpit 2.0 interface & xterm.js terminal
+│   ├── audio/                  # Audio input streaming buffer
+│   └── uploads/                # File attachments buffer
+├── launcher/                   # Mobile launcher suite
+│   ├── agy-mobile.sh           # Termux:Widget background launcher
+│   └── install-widget.sh       # Widget setup script
 ├── cloudflare/
-│   ├── edge-gateway/           # Cloudflare Worker zero-trust gatekeeper
+│   ├── edge-gateway/           # Zero-Trust Cloudflare Worker Gateway
 │   │   ├── wrangler.toml
 │   │   ├── package.json
 │   │   └── src/index.js
-│   └── share-bridge/           # Cloudflare Worker file bridge
-│       ├── wrangler.toml
-│       ├── package.json
-│       └── src/index.js
-├── agy-mobile-app/             # Termux Python Origin Backend & Web Assets
-│   ├── server.py               # PTY session daemon & REST endpoints
-│   ├── requirements.txt        # Python dependencies (websockets)
-│   ├── static/
-│   │   └── index.html          # Cockpit 2.0 interface & xterm.js canvas
-│   ├── audio/                  # Voice input streaming directory
-│   └── uploads/                # Multi-file attachment directory
-├── launcher/                   # Android Termux:Widget shortcuts
-│   ├── agy-mobile.sh
-│   ├── AGY-Mobile.sh
-│   └── install-widget.sh
-├── tunnel/                     # Cloudflare Named Tunnel configuration
-│   └── config.yml.example
-├── install.sh                  # 1-Tap Termux installation script
-├── agy-mobile.sh               # Root convenience launcher
-└── README.md                   # Complete system documentation
-```
-
----
-
-## 📲 Quick Start on Android (Termux)
-
-```bash
-# 1. Clone repository
-git clone https://github.com/mohit-79/agy-mobile.git
-cd agy-mobile
-
-# 2. Configure .env
-cp .env.example .env
-# Edit .env with your PIN and domain
-
-# 3. Run automated installer
-chmod +x install.sh
-bash install.sh
-
-# 4. Launch daemon
-./agy-mobile.sh
+│   └── share-bridge/           # Universal file sharing bridge
+└── README.md                   # Full documentation
 ```

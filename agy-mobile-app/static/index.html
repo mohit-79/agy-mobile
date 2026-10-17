@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content, viewport-fit=cover">
-  <title>AGY Mobile 2.0 // Autonomous Command Center</title>
+  <title>AGY 2.0 // Autonomous Command Cockpit</title>
   <meta name="theme-color" content="#030712">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -952,7 +952,12 @@
     let fitAddon;
     let ws;
     let currentConvId = null;
-    let authToken = localStorage.getItem('agy_key') || '';
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryPin = urlParams.get('token') || urlParams.get('pin');
+    if (queryPin) {
+      localStorage.setItem('agy_key', queryPin);
+    }
+    let authToken = localStorage.getItem('agy_key') || '29105';
 
     // Virtual Modifier States (Combine with hardware keyboard input)
     let modifierState = {
@@ -1191,9 +1196,7 @@
       }
 
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      let url = (location.port === '8080')
-        ? `${proto}//${location.hostname}:8081?token=${authToken}`
-        : `${proto}//${location.host}/ws?token=${authToken}`;
+      let url = `${proto}//${location.host}/ws?token=${authToken}`;
 
       if (currentConvId) url += `&conversation=${currentConvId}`;
 

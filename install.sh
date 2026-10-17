@@ -1,25 +1,43 @@
-#!/data/data/com.termux/files/usr/bin/bash
-# =======================================================
-# AGY-Mobile 2.0 Full-Stack Installer for Termux
-# =======================================================
+#!/usr/bin/env bash
+# ==================================================================
+# AGY 2.0 // Universal Automated Full-Stack Installer
+# ==================================================================
 set -e
 
-echo "📦 Installing system prerequisites..."
-pkg update -y && pkg install -y python python-pip termux-api
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-echo "🐍 Installing Python dependencies..."
-pip install -r agy-mobile-app/requirements.txt
+echo "=================================================================="
+echo "  AGY 2.0 // Universal Automated Installer"
+echo "=================================================================="
 
-echo "⚙️ Initializing environment configuration..."
-if [ ! -f "agy-mobile-app/.env" ] && [ ! -f ".env" ]; then
-    cp .env.example .env
-    echo "⚠️ Created .env from template. Please update your confidential secrets in .env!"
+# 1. Termux package prerequisites
+if command -v pkg >/dev/null 2>&1; then
+    echo "📦 [Termux] Updating packages and installing prerequisites..."
+    pkg update -y && pkg install -y python python-pip termux-api proot
 fi
 
-echo "📲 Setting up Termux:Widget shortcuts..."
-bash launcher/install-widget.sh
+# 2. Python dependencies
+echo "🐍 Installing Python dependencies..."
+python3 -m pip install -r requirements.txt 2>/dev/null || pip install -r requirements.txt || pip install --no-build-isolation -r requirements.txt
 
-echo "🔑 Setting executable permissions..."
-chmod +x launcher/agy-mobile.sh launcher/AGY-Mobile.sh launcher/install-widget.sh agy-mobile.sh
+# 3. Environment setup
+if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+    cp .env.example .env
+    echo "⚙️ Initialized .env from template. Update your PIN or domain in .env as needed."
+fi
 
-echo "🎉 Installation complete! Tap the AGY-Mobile widget or run ./agy-mobile.sh to start."
+# 4. Make all launcher scripts executable
+chmod +x start.sh install.sh launcher/*.sh 2>/dev/null || true
+
+# 5. Setup Termux widget if on Termux
+if [ -d "/data/data/com.termux/files/home" ] && [ -f "launcher/install-widget.sh" ]; then
+    echo "📲 Setting up Termux:Widget shortcuts..."
+    bash launcher/install-widget.sh
+fi
+
+echo "=================================================================="
+echo "🎉 Setup complete! Launch using:"
+echo "   - Windows PC:        Double-click start.bat"
+echo "   - Linux / Termux:    ./start.sh"
+echo "=================================================================="

@@ -2,14 +2,15 @@ name = "agy-gatekeeper"
 main = "src/index.js"
 compatibility_date = "2024-04-01"
 
-# Production route mapping (set in .env / wrangler secret)
-routes = [
-  { pattern = "${AGY_DOMAIN}/*", zone_name = "${CF_ZONE_NAME}" }
+# Production route mapping (Example: custom_domain = true or routes pattern)
+# routes = [
+#   { pattern = "agy.harjani.me", custom_domain = true }
+# ]
+
+kv_namespaces = [
+  { binding = "TUNNEL_KV", id = "65f28725448a45b8bcf44966b1d67409" }
 ]
 
 [vars]
-# Configure confidential secrets via wrangler secret:
-# wrangler secret put AUTH_PIN
-# wrangler secret put SESSION_SECRET
-AUTH_PIN = "${AGY_AUTH_PIN}"
-SESSION_SECRET = "${AGY_SESSION_SECRET}"
+AUTH_PIN = "29105"
+SESSION_SECRET = "harjani_agy_sec_token_889922"
