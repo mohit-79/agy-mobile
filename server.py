@@ -161,10 +161,10 @@ class PosixPtySession:
     def __init__(self, conv_id="default"):
         self.conv_id = conv_id
         self.clients = set()
-        self.history_buffer = deque(maxlen=2000)
-        shell_cmd = "/data/data/com.termux/files/usr/bin/bash" if IS_ANDROID and os.path.exists("/data/data/com.termux/files/usr/bin/bash") else os.environ.get("SHELL", "/bin/bash")
+        shell_cmd = os.environ.get("BASH_PATH") or ("/data/data/com.termux/files/usr/bin/bash" if IS_ANDROID and os.path.exists("/data/data/com.termux/files/usr/bin/bash") else os.environ.get("SHELL", "/bin/bash"))
         
         agy_bin = get_agy_binary()
+
         if conv_id and conv_id not in ("default", "new"):
             agy_flag = f"--conversation {conv_id}"
         else:

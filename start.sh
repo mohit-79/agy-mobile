@@ -20,15 +20,24 @@ if command -v termux-wake-lock >/dev/null 2>&1; then
     termux-wake-lock 2>/dev/null || true
 fi
 
-# Pre-flight cleanup: Terminate any old lingering servers holding port 8090
+# Pre-flight cleanup: Terminate any old lingering servers holding PORT
+TARGET_PORT="8090"
+if [ -f ".env" ]; then
+    ENV_PORT=$(grep -E '^(PORT|AGY_PORT|AGY_HTTP_PORT)=' .env 2>/dev/null | cut -d '=' -f2 | tr -d ' "\r' | head -n1 || true)
+    if [ -n "$ENV_PORT" ]; then
+        TARGET_PORT="$ENV_PORT"
+    fi
+fi
+
 if command -v lsof >/dev/null 2>&1; then
-    OLD_PIDS=$(lsof -t -i:8090 2>/dev/null || true)
+    OLD_PIDS=$(lsof -t -i:"$TARGET_PORT" 2>/dev/null || true)
     if [ -n "$OLD_PIDS" ]; then
-        echo "[*] Cleaning up lingering processes on port 8090: $OLD_PIDS"
+        echo "[*] Cleaning up lingering processes on port $TARGET_PORT: $OLD_PIDS"
         kill -9 $OLD_PIDS 2>/dev/null || true
         sleep 1
     fi
 fi
+
 
 # 2. Check Python
 
